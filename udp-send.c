@@ -42,8 +42,8 @@
 
 //----- Defines ---------------------------------------------------------------
 #define  PORT_NUM          49152 // was 1050 Port number used
-#define  IP_ADDR     "192.168.1.12" // IP address of destination
-#define  IP_ADDR2    "192.168.1.2" // IP address of source
+char sourceIP[]="192.168.1.12";
+char destIP[]="192.168.1.2";
 
 char addrp[INET6_ADDRSTRLEN];
 
@@ -133,7 +133,7 @@ char *lookip(){
 
 //===== Main program ==========================================================
 //FIXME ARGV[] ARGC
-int main(){
+int main(int argc, char **argv){
 #ifdef WIN
   WORD wVersionRequested = MAKEWORD(1,1);       // Stuff for WSA functions
   WSADATA wsaData;                              // Stuff for WSA functions
@@ -152,16 +152,16 @@ int main(){
   server_addr.sin_family = AF_INET;                 // Address family to use
   server_addr.sin_port = htons(PORT_NUM);           // Port number to use
 //This is an issue FIXME
-  server_addr.sin_addr.s_addr = inet_addr(IP_ADDR); // IP address to use
+  server_addr.sin_addr.s_addr = inet_addr(lookip()); // IP address to use
   if (bind(client_s, (struct sockaddr *) &server_addr, sizeof(server_addr)) < 0) {
           printf("Step 2 - bind failed\n");          exit(1); }
-  sprintf(out_buf, "Test message from %s %d to %s %d or THIS %s?"
-		  ,IP_ADDR2,PORT_NUM,IP_ADDR,PORT_NUM,lookip());
-  server_addr.sin_addr.s_addr = inet_addr(IP_ADDR); // TO address
+  sprintf(out_buf, "Test message from %s %d to %s %d detected IP %s"
+		  ,sourceIP,PORT_NUM,destIP,PORT_NUM,lookip());
+  server_addr.sin_addr.s_addr = inet_addr(destIP); // TO address
   retcode = sendto(client_s, out_buf, (strlen(out_buf) + 1), 0,
     (struct sockaddr *)&server_addr, sizeof(server_addr));
   if (retcode < 0)  { printf("*** ERROR - sendto() failed \n"); exit(-1); }
-  server_addr.sin_addr.s_addr = inet_addr(IP_ADDR); // IP address to use
+  server_addr.sin_addr.s_addr = inet_addr(sourceIP); // IP address to use
   addr_len = sizeof(server_addr);
   retcode = recvfrom(client_s, in_buf, sizeof(in_buf), 0,
     (struct sockaddr *)&server_addr, &addr_len);
