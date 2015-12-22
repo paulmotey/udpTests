@@ -16,7 +16,7 @@ udp-send: udp-send.o
 	$(CC) -o udp-send udp-send.o $(LIBS)
 
 
-udp-send.o: udp-send.c port.h
+udp-send.o: udp-send.c 
 
 
 clean:

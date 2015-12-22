@@ -8,8 +8,11 @@
        so COMMAND where[192.168.1.2 i.e.] and count
        Merge with windows version
 */
-#define  LINUX                // WIN for Winsock and BSD for BSD sockets
-
+#define  WIN               // WIN for Winsock and BSD for BSD sockets
+//Fix that nasty CYGWIN stuff
+#ifdef WIN
+#define __USE_W32_SOCKETS
+#endif
 //----- Include files ---------------------------------------------------------
 #include <stdio.h>          // Needed for printf()
 #include <string.h>         // Needed for memcpy() and strcpy()
@@ -74,6 +77,59 @@ char* lookip(){
     return addrp;
 }
 #endif
+#ifdef WIN
+char lana[256];
+char fail[]="Failing";
+char *lookip(){
+	char hostname[1024];
+	hostname[1023] = '\0';
+	gethostname(hostname, 1023);
+    WSADATA wsaData;
+    int iResult;
+    INT iRetval;
+    DWORD dwRetval;
+    int i = 1;
+    struct addrinfo *result = NULL;
+    struct addrinfo *ptr = NULL;
+    struct addrinfo hints;
+    struct sockaddr_in  *sockaddr_ipv4;
+    LPSOCKADDR sockaddr_ip;
+    char ipstringbuffer[46];
+    DWORD ipbufferlength = 46;
+    iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+    if (iResult != 0) { printf("WSAStartup failed: %d\n", iResult);return fail;}
+    ZeroMemory( &hints, sizeof(hints) );
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
+    dwRetval = getaddrinfo(hostname, NULL, &hints, &result);
+    if ( dwRetval != 0 ) {
+        printf("getaddrinfo failed with error: %d\n", dwRetval);
+        WSACleanup();
+        return fail;
+    }
+    for(ptr=result; ptr != NULL ;ptr=ptr->ai_next) {
+        switch (ptr->ai_family) {
+            case AF_UNSPEC:
+                break;
+            case AF_INET:
+                sockaddr_ipv4 = (struct sockaddr_in *) ptr->ai_addr;
+                sprintf(lana,"%s",inet_ntoa(sockaddr_ipv4->sin_addr) );
+                break;
+            case AF_INET6:
+                break;
+            case AF_NETBIOS:
+                break;
+            default:
+                break;
+        }
+    }
+    freeaddrinfo(result);
+    WSACleanup();
+    return lana;
+}
+
+#endif
 
 //===== Main program ==========================================================
 //FIXME ARGV[] ARGC
@@ -92,12 +148,13 @@ int main(){
   WSAStartup(wVersionRequested, &wsaData); //INIT winsock
 #endif
   client_s = socket(AF_INET, SOCK_DGRAM, 0);
-  if (client_s < 0)  {    printf("*** ERROR - socket() failed \n");    exit(-1);  }
+  if (client_s < 0)  {    printf("Step 1 -- socket create failed \n");    exit(-1);  }
   server_addr.sin_family = AF_INET;                 // Address family to use
   server_addr.sin_port = htons(PORT_NUM);           // Port number to use
-  server_addr.sin_addr.s_addr = inet_addr(IP_ADDR2); // IP address to use
+//This is an issue FIXME
+  server_addr.sin_addr.s_addr = inet_addr(IP_ADDR); // IP address to use
   if (bind(client_s, (struct sockaddr *) &server_addr, sizeof(server_addr)) < 0) {
-          perror("bind failed");          exit(1); }
+          printf("Step 2 - bind failed\n");          exit(1); }
   sprintf(out_buf, "Test message from %s %d to %s %d or THIS %s?"
 		  ,IP_ADDR2,PORT_NUM,IP_ADDR,PORT_NUM,lookip());
   server_addr.sin_addr.s_addr = inet_addr(IP_ADDR); // TO address
