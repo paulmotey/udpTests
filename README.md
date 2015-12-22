@@ -1,1 +1,2 @@
-This is the tangled mess created by weak collaboration
+This is collaboration and repair of the project
+
