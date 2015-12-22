@@ -8,6 +8,8 @@
        so COMMAND where[192.168.1.2 i.e.] and count
        Merge with windows version
 */
+#define VERSION_MAJOR 0
+#define VERSION_MINOR 1
 #define  WIN               // WIN for Winsock and BSD for BSD sockets
 //Fix that nasty CYGWIN stuff
 #ifdef WIN
@@ -132,8 +134,11 @@ char *lookip(){
 #endif
 
 //===== Main program ==========================================================
-//FIXME ARGV[] ARGC
 int main(int argc, char **argv){
+	if (argc != 2){
+		printf("Run this with a destination IP like 192.168.1.2\n");return 1;
+	}
+printf("Version %d.%d UDP send and receive \n",VERSION_MAJOR,VERSION_MINOR);
 #ifdef WIN
   WORD wVersionRequested = MAKEWORD(1,1);       // Stuff for WSA functions
   WSADATA wsaData;                              // Stuff for WSA functions
@@ -156,17 +161,17 @@ int main(int argc, char **argv){
   if (bind(client_s, (struct sockaddr *) &server_addr, sizeof(server_addr)) < 0) {
           printf("Step 2 - bind failed\n");          exit(1); }
   sprintf(out_buf, "Test message from %s %d to %s %d detected IP %s"
-		  ,sourceIP,PORT_NUM,destIP,PORT_NUM,lookip());
-  server_addr.sin_addr.s_addr = inet_addr(destIP); // TO address
+		  ,lookip(),PORT_NUM,argv[1],PORT_NUM,lookip());
+  server_addr.sin_addr.s_addr = inet_addr(argv[1]); // TO address
   retcode = sendto(client_s, out_buf, (strlen(out_buf) + 1), 0,
     (struct sockaddr *)&server_addr, sizeof(server_addr));
   if (retcode < 0)  { printf("*** ERROR - sendto() failed \n"); exit(-1); }
-  server_addr.sin_addr.s_addr = inet_addr(sourceIP); // IP address to use
+  server_addr.sin_addr.s_addr = inet_addr(lookip()); // IP address to use
   addr_len = sizeof(server_addr);
   retcode = recvfrom(client_s, in_buf, sizeof(in_buf), 0,
     (struct sockaddr *)&server_addr, &addr_len);
   if (retcode < 0)  { printf("*** ERROR - recvfrom() failed \n");    exit(-1);  }
-  printf("Received from server: %s \n", in_buf);
+  printf("Received: %s \n", in_buf);
 #ifdef WIN
   retcode = closesocket(client_s);
   if (retcode < 0)  {    printf("*** ERROR - closesocket() failed \n");    exit(-1);  }
