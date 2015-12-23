@@ -12,6 +12,8 @@
 
 #define VERSION_MAJOR 0
 #define VERSION_MINOR 2
+#define VERSION_STEP  3
+
 //#define  WIN               // WIN for Winsock and BSD for BSD sockets
 
 //Fix that nasty CYGWIN stuff
@@ -141,7 +143,7 @@ int main(int argc, char **argv){
 	if (argc != 2){
 		printf("Run this with a destination IP like 192.168.1.2\n");return 1;
 	}
-printf("Version %d.%d UDP send and receive \n",VERSION_MAJOR,VERSION_MINOR);
+printf("Version %d.%d step %d UDP send and receive \n",VERSION_MAJOR,VERSION_MINOR,VERSION_STEP);
 #ifdef WIN
   WORD wVersionRequested = MAKEWORD(1,1);       // Stuff for WSA functions
   WSADATA wsaData;                              // Stuff for WSA functions
@@ -155,21 +157,25 @@ printf("Version %d.%d UDP send and receive \n",VERSION_MAJOR,VERSION_MINOR);
 #ifdef WIN
   WSAStartup(wVersionRequested, &wsaData); //INIT winsock
 #endif
+  char					lookipv[256];
+  strncpy(lookipv,lookip(),256); // MY LAN IP
   client_s = socket(AF_INET, SOCK_DGRAM, 0);
   if (client_s < 0)  {    printf("Step 1 -- socket create failed \n");    exit(-1);  }
   server_addr.sin_family = AF_INET;                 // Address family to use
   server_addr.sin_port = htons(PORT_NUM);           // Port number to use
 //This is an issue FIXME
-  server_addr.sin_addr.s_addr = inet_addr(lookip()); // IP address to use
+  server_addr.sin_addr.s_addr = inet_addr(lookipv); // IP address to use
   if (bind(client_s, (struct sockaddr *) &server_addr, sizeof(server_addr)) < 0) {
           printf("Step 2 - bind failed\n");          exit(1); }
-  sprintf(out_buf, "Test message from %s %d to %s %d detected IP %s"
-		  ,lookip(),PORT_NUM,argv[1],PORT_NUM,lookip());
+  printf("Initialized as %s %d\n",lookipv,PORT_NUM);
+  sprintf(out_buf, "Test Version %d.%d step %d message from %s %d to %s %d detected IP %s"
+		  ,VERSION_MAJOR,VERSION_MINOR,VERSION_STEP
+		  ,lookipv,PORT_NUM,argv[1],PORT_NUM,lookipv);
   server_addr.sin_addr.s_addr = inet_addr(argv[1]); // TO address
   retcode = sendto(client_s, out_buf, (strlen(out_buf) + 1), 0,
     (struct sockaddr *)&server_addr, sizeof(server_addr));
   if (retcode < 0)  { printf("*** ERROR - sendto() failed \n"); exit(-1); }
-  server_addr.sin_addr.s_addr = inet_addr(lookip()); // IP address to use
+  server_addr.sin_addr.s_addr = inet_addr(lookipv); // IP address to use
   addr_len = sizeof(server_addr);
   retcode = recvfrom(client_s, in_buf, sizeof(in_buf), 0,
     (struct sockaddr *)&server_addr, &addr_len);
