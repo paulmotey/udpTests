@@ -1,4 +1,5 @@
 /*
+ * UDP Tests
        Paul Mohr
        UDP
        Get machine name
@@ -14,6 +15,7 @@
 #define VERSION_MINOR 2
 #define VERSION_STEP  3
 
+//This is defined in make now
 //#define  WIN               // WIN for Winsock and BSD for BSD sockets
 
 //Fix that nasty CYGWIN stuff
@@ -33,9 +35,12 @@
   #include "arpa/inet.h"
 #endif
 #ifdef WIN
-  #include <winsock2.h>
-  #include<Ws2tcpip.h>
-  #include <windows.h>
+#define _WIN32_WINNT 0x0a00
+//#define _WIN32_WINNT _WIN32_WINNT_WIN10
+//0x501 XT
+#include <winsock2.h>
+#include<Ws2tcpip.h>
+#include <windows.h>
   #pragma comment(lib,"ws2_32.lib") //Winsock Library
 #endif
 #ifdef BSD
@@ -48,9 +53,9 @@
 #endif
 
 //----- Defines ---------------------------------------------------------------
-#define  PORT_NUM          49152 // was 1050 Port number used
-char sourceIP[]="192.168.1.12";
-char destIP[]="192.168.1.2";
+#define  PORT_NUM          49152 // Port number used
+char sourceIP[]="192.168.1.12"; // Discovered
+char destIP[]="192.168.1.2";    // From command line argv[1]
 
 char addrp[INET6_ADDRSTRLEN];
 
